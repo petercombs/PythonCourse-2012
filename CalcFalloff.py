@@ -1,3 +1,4 @@
+from __future__ import division
 import pysam
 from collections import namedtuple
 import numpy as np
@@ -58,7 +59,7 @@ if __name__ == "__main__":
     RESOLUTION = 200
     UPSTREAM = 100
     DOWNSTREAM = 100
-    CLEARANCE = 50
+    CLEARANCE = 200
     gtf_filename = 'E_coli_k12.EB1_e_coli_k12.13.gtf'
 
     gtf_data = parse_gtf(gtf_filename)
@@ -110,6 +111,19 @@ if __name__ == "__main__":
 
 
         # Look at the gene itself
+        last_pct = 0
+        for col in f.pileup(chrom, start, end):
+            if not start <= col.pos < end:
+                continue
+            # Note the from future import __division__
+            if strand == '+':
+                hi = int(np.floor(RESOLUTION * (col.pos - start)/(end - start)))
+            elif strand == '-':
+                hi = int(np.floor(RESOLUTION * (end - col.pos)/(end - start)))
+
+            gene_cov[last_pct:hi] += col.n
+            last_pct = hi
+
 
 
         # Look to the right of the gene
