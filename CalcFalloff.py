@@ -25,6 +25,7 @@ def find_nearest_genes(gtf_data, genome_size):
     old_end = 0
     first_start = 0
     first_end = 0
+    gene = None
     for gene in gtf_data:
         for i in range(old_start, gene.start):
             nearest_to_right[i] = gene.start
@@ -37,6 +38,8 @@ def find_nearest_genes(gtf_data, genome_size):
 
         old_start = gene.start
         old_end = gene.end
+
+    assert gene  # Should catch an empty gtf file
 
     for i in range(first_end):
         nearest_to_left[i] = gene.end
