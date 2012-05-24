@@ -108,5 +108,35 @@ if __name__ == "__main__":
                 downstream[i] += col.n
 
 
+        # Look at the gene itself
+
+
+        # Look to the right of the gene
+        # (downstream for the + strand, upstream for the - strand)
+
+        dist = DOWNSTREAM if strand == '+' else UPSTREAM
+
+        downstream_start = end
+        downstream_end = max(min(nearest_to_right[end] - CLEARANCE,
+                                 end + dist),
+                             end)
+
+        if strand == '+':
+            downstream_n[0:downstream_end - end] += 1
+        elif strand == '-':
+            upstream_n[UPSTREAM - downstream_end + end: UPSTREAM]
+
+        for col in f.pileup(chrom, downstream_start, downstream_end):
+            if not downstream_start < col.pos < downstream_end:
+                continue
+
+            if strand == '+':
+                i = col.pos - end - 1
+                downstream[i] += col.n
+            elif strand == '-':
+                i = UPSTREAM - col.pos + end
+                upstream[i] += col.n
+
+
 
 
