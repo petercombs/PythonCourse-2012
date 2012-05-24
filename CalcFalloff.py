@@ -6,7 +6,7 @@ def parse_gtf(filename):
     Gene = namedtuple("Gene", ['chrom', 'start', 'end', 'strand', 'other'])
     genelist = []
     for line in open(filename):
-        if line.startswith('#'): 
+        if line.startswith('#') or line.startswith('F'):
             continue
 
         data = line.split('\t')
@@ -27,6 +27,7 @@ def find_nearest_genes(gtf_data, genome_size):
     first_end = 0
     gene = None
     for gene in gtf_data:
+        if gene.chrom != 'Chromosome': continue
         for i in range(old_start, gene.start):
             nearest_to_right[i] = gene.start
         if first_end == 0:
@@ -71,8 +72,8 @@ if __name__ == "__main__":
     downstream = np.zeros(DOWNSTREAM)
     downstream_n = np.zeros(DOWNSTREAM)
 
-    gene = np.zeros(RESOLUTION)
-    gene_n = len(gtf_data)
+    gene_cov = np.zeros(RESOLUTION)
+    gene_cov_n = len(gtf_data)
     # Every gene will get covered completely, so n would just be the length of
     # gtf_data
 
@@ -86,7 +87,7 @@ if __name__ == "__main__":
         # (upstream for the + strand, downstream for the - strand)
 
         dist = UPSTREAM if strand == '+' else DOWNSTREAM
-        upstream_start = min(max(nearest_to_left[start] + CLEARANCE, 
+        upstream_start = min(max(nearest_to_left[start] + CLEARANCE,
                                  start - dist),
                              start)
         upstream_end = start
