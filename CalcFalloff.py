@@ -88,23 +88,23 @@ if __name__ == "__main__":
         dist = UPSTREAM if strand == '+' else DOWNSTREAM
         upstream_start = min(max(nearest_to_left[start] + CLEARANCE, 
                                  start - dist),
-                             start-1)
+                             start)
         upstream_end = start
 
         if strand == '+':
-            upstream[UPSTREAM - start + upstream_start:UPSTREAM] += 1
+            upstream_n[UPSTREAM - start + upstream_start:UPSTREAM] += 1
         elif strand == '-':
-            downstream[0:start - upstream_start] += 1
+            downstream_n[0:start - upstream_start] += 1
 
         for col in f.pileup(chrom, upstream_start, upstream_end):
-            if not upstream_start < col.pos < upstream_end:
+            if not upstream_start <= col.pos < upstream_end:
                 continue
 
             if strand == '+':
-                i = UPSTREAM - start + col.pos - 1
+                i = UPSTREAM - start + col.pos
                 upstream[i] += col.n
             elif strand == '-':
-                i = start - col.pos
+                i = start - col.pos - 1
                 downstream[i] += col.n
 
 
