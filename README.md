@@ -14,9 +14,9 @@ competing with on a paper won't be able to lift your code and figure out what
 analyses you're doing, but on the other hand, your code *is* your method, so if
 you're doing anything non-trivial, there's definitely a case to be made for
 making it available after publication, at the very least. See, for example,
-[http://sciencecodemanifesto.org/]
+http://sciencecodemanifesto.org/
 
-CalcFallof.py
+CalcFalloff.py
 -------------
 
 This is code for finding the average(?) expression across all genes as a
