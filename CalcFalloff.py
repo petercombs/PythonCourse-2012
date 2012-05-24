@@ -3,7 +3,7 @@ from collections import namedtuple
 import numpy as np
 
 def parse_gtf(filename):
-    Gene = namedtuple("Gene", ['chrom', 'start', 'end', 'dir', 'other'])
+    Gene = namedtuple("Gene", ['chrom', 'start', 'end', 'strand', 'other'])
     genelist = []
     for line in open(filename):
         if line.startswith('#'): 
@@ -12,8 +12,9 @@ def parse_gtf(filename):
         data = line.split('\t')
         if data[2] != 'CDS':
             continue
-        genelist.append(Gene(data[0], int(data[3]), int(data[4]), data[6],
-                             data[-1]))
+        genelist.append(Gene(chrom=data[0],
+                             start=int(data[3]), end=int(data[4]),
+                             strand=data[6], other=data[-1]))
     return genelist
 
 def find_nearest_genes(gtf_data, genome_size):
@@ -75,31 +76,31 @@ if __name__ == "__main__":
     for gene in gtf_data:
         start = gene.start
         end = gene.end
-        dir = gene.dir
+        strand = gene.strand
         chrom = gene.chrom # Should always be "Chromosome"
 
         # Look to the left of the gene 
         # (upstream for the + strand, downstream for the - strand)
 
-        dist = UPSTREAM if dir == '+' else DOWNSTREAM
+        dist = UPSTREAM if strand == '+' else DOWNSTREAM
         upstream_start = min(max(nearest_to_left[start] + CLEARANCE, 
                                  start - dist),
                              start-1)
         upstream_end = start
 
-        if dir == '+':
+        if strand == '+':
             upstream[UPSTREAM - start + upstream_start:UPSTREAM] += 1
-        elif dir == '-':
+        elif strand == '-':
             downstream[0:start - upstream_start] += 1
 
         for col in f.pileup(chrom, upstream_start, upstream_end):
             if not upstream_start < col.pos < upstream_end:
                 continue
 
-            if dir == '+':
+            if strand == '+':
                 i = UPSTREAM - start + col.pos - 1
                 upstream[i] += col.n
-            elif dir == '-':
+            elif strand == '-':
                 i = start - col.pos
                 downstream[i] += col.n
 
