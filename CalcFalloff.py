@@ -27,7 +27,10 @@ def find_nearest_genes(gtf_data, genome_size):
     first_start = 0
     first_end = 0
     gene = None
-    for gene in gtf_data:
+
+    pbar = progressbar.ProgressBar(maxval=len(gtf_data))
+
+    for gene in pbar(gtf_data):
         if gene.chrom != 'Chromosome': continue
         for i in range(old_start, gene.start):
             nearest_to_right[i] = gene.start
@@ -78,7 +81,8 @@ if __name__ == "__main__":
     # Every gene will get covered completely, so n would just be the length of
     # gtf_data
 
-    for gene in gtf_data:
+    pbar = progressbar.ProgressBar(maxval=len(gtf_data))
+    for gene in pbar(gtf_data):
         start = gene.start
         end = gene.end
         strand = gene.strand
