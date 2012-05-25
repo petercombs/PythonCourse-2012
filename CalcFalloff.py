@@ -5,18 +5,22 @@ import numpy as np
 import progressbar
 
 def parse_gtf(filename):
-    Gene = namedtuple("Gene", ['chrom', 'start', 'end', 'strand', 'other'])
+    Gene = namedtuple("Gene", ['chrom', 'start', 'end', 'strand', 'type', 'other'])
     genelist = []
+    last_pos = ('', 0, 0)
     for line in open(filename):
         if line.startswith('#') or line.startswith('F'):
             continue
 
         data = line.split('\t')
-        if data[2] != 'CDS':
-            continue
-        genelist.append(Gene(chrom=data[0],
-                             start=int(data[3]), end=int(data[4]),
-                             strand=data[6], other=data[-1]))
+        if (data[0], data[3], data[4]) != last_pos:
+            genelist.append(Gene(chrom=data[0],
+                                 start=int(data[3]),
+                                 end=int(data[4]),
+                                 strand=data[6],
+                                 type=data[2],
+                                 other=data[-1].strip()))
+            last_pos = data[0], data[3], data[4]
     return genelist
 
 def find_nearest_genes(gtf_data, genome_size):
@@ -58,6 +62,13 @@ def find_nearest_genes(gtf_data, genome_size):
 
     return nearest_to_left, nearest_to_right
 
+def filter_gtf(gtf_data):
+    """ Remove non-CDS entries from the GTF data"""
+    for entry in gtf_data[:]:
+        if entry.type != 'CDS':
+            gtf_data.remove(entry)
+
+
 if __name__ == "__main__":
     genome_size = 4639675  # E. coli K12 MG1655 from Ensembl
     RESOLUTION = 200
@@ -80,6 +91,8 @@ if __name__ == "__main__":
     gene_cov = np.zeros(RESOLUTION)
     gene_cov_n = 0
 
+
+    filter_gtf(gtf_data)
     pbar = progressbar.ProgressBar(maxval=len(gtf_data))
     for gene in pbar(gtf_data):
         start = gene.start
