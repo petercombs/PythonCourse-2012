@@ -157,6 +157,8 @@ if __name__ == "__main__":
             if strand == '+':
                 i = col.pos - end - 1
                 downstream[i] += col.n
+                if col.n > 50 and i > 50:
+                    print "+Something fishy...", start, col.pos, col.n
             elif strand == '-':
                 i = UPSTREAM - col.pos + end
                 upstream[i] += col.n
