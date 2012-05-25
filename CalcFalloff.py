@@ -101,6 +101,11 @@ if __name__ == "__main__":
         strand = gene.strand
         chrom = gene.chrom # Should always be "Chromosome"
 
+        if start == 4275492: continue 
+        # soxR-1 has sraL with an overlapping region with sraL.  I'm a little
+        # surprised this seems to be the only problem...
+    
+
         # Look to the left of the gene 
         # (upstream for the + strand, downstream for the - strand)
 
