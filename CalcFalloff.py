@@ -2,6 +2,7 @@ from __future__ import division
 import pysam
 from collections import namedtuple
 import numpy as np
+import progressbar
 
 def parse_gtf(filename):
     Gene = namedtuple("Gene", ['chrom', 'start', 'end', 'strand', 'other'])
