@@ -91,6 +91,7 @@ if __name__ == "__main__":
     gene_cov = np.zeros(RESOLUTION)
     gene_cov_n = 0
 
+    dists = []
 
     filter_gtf(gtf_data)
     pbar = progressbar.ProgressBar(maxval=len(gtf_data))
@@ -108,6 +109,8 @@ if __name__ == "__main__":
                                  start - dist),
                              start)
         upstream_end = start
+
+        dists.append(upstream_end - upstream_start)
 
         if strand == '+':
             upstream_n[UPSTREAM - start + upstream_start:UPSTREAM] += 1
@@ -157,6 +160,8 @@ if __name__ == "__main__":
         downstream_end = max(min(nearest_to_right[end] - CLEARANCE,
                                  end + dist),
                              end)
+
+        dists.append(downstream_end - downstream_start)
 
         if strand == '+':
             downstream_n[0:downstream_end - end] += 1
