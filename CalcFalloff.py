@@ -78,9 +78,7 @@ if __name__ == "__main__":
     downstream_n = np.zeros(DOWNSTREAM)
 
     gene_cov = np.zeros(RESOLUTION)
-    gene_cov_n = len(gtf_data)
-    # Every gene will get covered completely, so n would just be the length of
-    # gtf_data
+    gene_cov_n = 0
 
     pbar = progressbar.ProgressBar(maxval=len(gtf_data))
     for gene in pbar(gtf_data):
@@ -113,13 +111,19 @@ if __name__ == "__main__":
             elif strand == '-':
                 i = start - col.pos - 1
                 downstream[i] += col.n
+                if col.n > 50 and i > 50:
+                    print "-Something fishy...", start, col.pos, col.n
 
 
         # Look at the gene itself
-        last_pct = 0
+        last_pct = -1
         for col in f.pileup(chrom, start, end):
             if not start <= col.pos < end:
                 continue
+            if last_pct == -1:
+                # Genes with any expression whatsoever should get included
+                gene_cov_n += 1
+                last_pct = 0
             # Note the from future import __division__
             if strand == '+':
                 hi = int(np.floor(RESOLUTION * (col.pos - start)/(end - start)))
