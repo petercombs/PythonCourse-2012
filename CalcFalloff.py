@@ -99,7 +99,15 @@ def filter_gtf(gtf_data):
 
 def find_upper_limits(end, strand, to_left, to_right):
     """ """
-    return 0
+    if strand == '+':
+        dist = DOWNSTREAM 
+    else:
+        dist = UPSTREAM
+    no_gene_pos = end + dist
+    gene_pos = to_right[end] - CLEARANCE
+    downstream = max(min(no_gene_pos, gene_pos),
+                     end)
+    return downstream
 
 def find_lower_limits(start, strand, to_left, to_right):
     """ """
@@ -149,6 +157,9 @@ if __name__ == "__main__":
         upstream_start = find_lower_limits(start, strand, nearest_to_left,
                                            nearest_to_right)
         upstream_end = start
+        downstream_start = end
+        downstream_end = find_upper_limits(end, strand, nearest_to_left,
+                                           nearest_to_right)
 
         dists.append(upstream_end - upstream_start)
 
@@ -193,13 +204,6 @@ if __name__ == "__main__":
 
         # Look to the right of the gene
         # (downstream for the + strand, upstream for the - strand)
-
-        dist = DOWNSTREAM if strand == '+' else UPSTREAM
-
-        downstream_start = end
-        downstream_end = max(min(nearest_to_right[end] - CLEARANCE,
-                                 end + dist),
-                             end)
 
         dists.append(downstream_end - downstream_start)
 
