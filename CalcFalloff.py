@@ -1,11 +1,35 @@
+""" CalcFalloff -- Calculates the read falloff around a gene
+
+This is code for finding the average(?) expression across all genes as a
+function of position. We'd like to see the upstream area (which should be
+relatively low), the gene itself (relatively high, and nearly constant across
+the gene), and then the downstream, which ought to fall off quickly in the
+no-drug case, and fall off much more slowly in the +drug case.
+"""
+
 from __future__ import division
 import pysam
 from collections import namedtuple
 import numpy as np
 import progressbar
 
+
+# Define constants
+Gene = namedtuple("Gene", ['chrom', 'start', 'end', 'strand', 'type', 'other'])
+GENOME_SIZE = 4639675  # E. coli K12 MG1655 from Ensembl
+RESOLUTION = 200
+UPSTREAM = 100
+DOWNSTREAM = 100
+CLEARANCE = 200
+gtf_filename = 'E_coli_k12.EB1_e_coli_k12.13.gtf'
+
 def parse_gtf(filename):
-    Gene = namedtuple("Gene", ['chrom', 'start', 'end', 'strand', 'type', 'other'])
+    """ Parses the GTF in filename into a list of Genes
+
+    At the moment, this strips out everything that's a comment or on the F
+    chromosome, as well as anything that has the exact same extent as the
+    previous entry.
+    """
     genelist = []
     last_pos = ('', 0, 0)
     for line in open(filename):
@@ -24,6 +48,11 @@ def parse_gtf(filename):
     return genelist
 
 def find_nearest_genes(gtf_data, genome_size):
+    """For each base on the genome, find the nearest genes to the left and right
+
+    This is useful for doing lookups, although it may be too large to scale to
+    non-bacterial organisms.
+    """
     nearest_to_left = [0]*genome_size
     nearest_to_right = [0]*genome_size
 
@@ -69,19 +98,13 @@ def filter_gtf(gtf_data):
             gtf_data.remove(entry)
 
 
-if __name__ == "__main__":
-    genome_size = 4639675  # E. coli K12 MG1655 from Ensembl
-    RESOLUTION = 200
-    UPSTREAM = 100
-    DOWNSTREAM = 100
-    CLEARANCE = 200
-    gtf_filename = 'E_coli_k12.EB1_e_coli_k12.13.gtf'
 
+if __name__ == "__main__":
     gtf_data = parse_gtf(gtf_filename)
     nearest_to_left, nearest_to_right = find_nearest_genes(gtf_data,
-                                                           genome_size)
+                                                           GENOME_SIZE)
 
-    f = pysam.Samfile('tophat_out/accepted_hits.bam', 'rb')
+    reads = pysam.Samfile('SRR400620.bam', 'rb')
 
     upstream = np.zeros(UPSTREAM) # number of reads (calculated with pileup)
     upstream_n = np.zeros(UPSTREAM) # number of genes used at each position
@@ -101,12 +124,11 @@ if __name__ == "__main__":
         strand = gene.strand
         chrom = gene.chrom # Should always be "Chromosome"
 
-        if start == 4275492: continue 
+        if start == 4275492: continue
         # soxR-1 has sraL with an overlapping region with sraL.  I'm a little
         # surprised this seems to be the only problem...
-    
 
-        # Look to the left of the gene 
+        # Look to the left of the gene
         # (upstream for the + strand, downstream for the - strand)
 
         dist = UPSTREAM if strand == '+' else DOWNSTREAM
@@ -122,7 +144,7 @@ if __name__ == "__main__":
         elif strand == '-':
             downstream_n[0:start - upstream_start] += 1
 
-        for col in f.pileup(chrom, upstream_start, upstream_end):
+        for col in reads.pileup(chrom, upstream_start, upstream_end):
             if not upstream_start <= col.pos < upstream_end:
                 continue
 
@@ -138,7 +160,7 @@ if __name__ == "__main__":
 
         # Look at the gene itself
         last_pct = -1
-        for col in f.pileup(chrom, start, end):
+        for col in reads.pileup(chrom, start, end):
             if not start <= col.pos < end:
                 continue
             if last_pct == -1:
@@ -173,7 +195,7 @@ if __name__ == "__main__":
         elif strand == '-':
             upstream_n[UPSTREAM - downstream_end + end: UPSTREAM]
 
-        for col in f.pileup(chrom, downstream_start, downstream_end):
+        for col in reads.pileup(chrom, downstream_start, downstream_end):
             if not downstream_start < col.pos < downstream_end:
                 continue
 
