@@ -97,7 +97,22 @@ def filter_gtf(gtf_data):
         if entry.type != 'CDS':
             gtf_data.remove(entry)
 
+def find_upper_limits(end, strand, to_left, to_right):
+    """ """
+    return 0
 
+def find_lower_limits(start, strand, to_left, to_right):
+    """ """
+    if strand == "+":
+        dist = UPSTREAM
+    else:
+        dist = DOWNSTREAM
+
+    no_gene_pos = start - dist
+    gene_pos = nearest_to_left[start] + CLEARANCE
+    upstream= min(max(no_gene_pos, gene_pos),
+                         start)
+    return upstream
 
 if __name__ == "__main__":
     gtf_data = parse_gtf(gtf_filename)
@@ -131,10 +146,8 @@ if __name__ == "__main__":
         # Look to the left of the gene
         # (upstream for the + strand, downstream for the - strand)
 
-        dist = UPSTREAM if strand == '+' else DOWNSTREAM
-        upstream_start = min(max(nearest_to_left[start] + CLEARANCE,
-                                 start - dist),
-                             start)
+        upstream_start = find_lower_limits(start, strand, nearest_to_left,
+                                           nearest_to_right)
         upstream_end = start
 
         dists.append(upstream_end - upstream_start)
