@@ -122,6 +122,19 @@ def find_lower_limits(start, strand, to_left, to_right):
                          start)
     return upstream
 
+def calc_deltas(us, ue, ds, de, strand):
+    delta_up = np.zeros(UPSTREAM)
+    delta_down = np.zeros(DOWNSTREAM)
+
+    if strand == '+':
+        delta_up[UPSTREAM - ue + us:] += 1
+        delta_down[:de - ds] += 1
+    elif strand == '-':
+        delta_up[UPSTREAM - de + ds:] += 1
+        delta_down[:ue - us] += 1
+
+    return delta_up, delta_down
+
 if __name__ == "__main__":
     gtf_data = parse_gtf(gtf_filename)
     nearest_to_left, nearest_to_right = find_nearest_genes(gtf_data,
@@ -161,12 +174,12 @@ if __name__ == "__main__":
         downstream_end = find_upper_limits(end, strand, nearest_to_left,
                                            nearest_to_right)
 
+        delta_up, delta_down = calc_deltas(upstream_start, upstream_end,
+                                           downstream_start, downstream_end,
+                                           strand)
+
         dists.append(upstream_end - upstream_start)
 
-        if strand == '+':
-            upstream_n[UPSTREAM - start + upstream_start:UPSTREAM] += 1
-        elif strand == '-':
-            downstream_n[0:start - upstream_start] += 1
 
         for col in reads.pileup(chrom, upstream_start, upstream_end):
             if not upstream_start <= col.pos < upstream_end:
@@ -190,6 +203,8 @@ if __name__ == "__main__":
             if last_pct == -1:
                 # Genes with any expression whatsoever should get included
                 gene_cov_n += 1
+                upstream_n += delta_up
+                downstream_n += delta_down
                 last_pct = 0
             # Note the from future import __division__
             if strand == '+':
@@ -206,11 +221,6 @@ if __name__ == "__main__":
         # (downstream for the + strand, upstream for the - strand)
 
         dists.append(downstream_end - downstream_start)
-
-        if strand == '+':
-            downstream_n[0:downstream_end - end] += 1
-        elif strand == '-':
-            upstream_n[UPSTREAM - downstream_end + end: UPSTREAM]
 
         for col in reads.pileup(chrom, downstream_start, downstream_end):
             if not downstream_start < col.pos < downstream_end:
