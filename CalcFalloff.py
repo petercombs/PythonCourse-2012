@@ -212,7 +212,10 @@ if __name__ == "__main__":
             elif strand == '-':
                 hi = int(np.floor(RESOLUTION * (end - col.pos)/(end - start)))
 
-            gene_cov[last_pct:hi] += col.n
+            if last_pct == hi:
+                gene_cov[hi] += col.n
+            else:
+                gene_cov[last_pct:hi] += col.n
             last_pct = hi
 
 
