@@ -12,6 +12,7 @@ import pysam
 from collections import namedtuple
 import numpy as np
 import progressbar
+import sys
 
 
 # Define constants
@@ -140,7 +141,7 @@ if __name__ == "__main__":
     nearest_to_left, nearest_to_right = find_nearest_genes(gtf_data,
                                                            GENOME_SIZE)
 
-    reads = pysam.Samfile('SRR400620.bam', 'rb')
+    reads = pysam.Samfile(sys.argv[1:], 'rb')
 
     upstream = np.zeros(UPSTREAM) # number of reads (calculated with pileup)
     upstream_n = np.zeros(UPSTREAM) # number of genes used at each position

@@ -42,5 +42,6 @@ pip-log.txt
 *.log
 *.info
 *.wig
+analysis
 
 tophat_out
