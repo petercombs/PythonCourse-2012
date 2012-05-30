@@ -19,9 +19,9 @@ import sys
 Gene = namedtuple("Gene", ['chrom', 'start', 'end', 'strand', 'type', 'other'])
 GENOME_SIZE = 4639675  # E. coli K12 MG1655 from Ensembl
 RESOLUTION = 200
-UPSTREAM = 100
-DOWNSTREAM = 100
-CLEARANCE = 200
+UPSTREAM = 300
+DOWNSTREAM = 300
+CLEARANCE = 50
 gtf_filename = 'E_coli_k12.EB1_e_coli_k12.13.gtf'
 
 def parse_gtf(filename):
