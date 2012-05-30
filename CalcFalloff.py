@@ -154,7 +154,11 @@ if __name__ == "__main__":
     dists = []
 
     filter_gtf(gtf_data)
-    pbar = progressbar.ProgressBar(maxval=len(gtf_data))
+    pbar = progressbar.ProgressBar(widgets=['Pileups: ',
+                                           progressbar.Percentage(), ' ',
+                                           progressbar.Bar(), ' ',
+                                           progressbar.ETA()],
+                                   maxval=len(gtf_data))
     all_ratios = {}
     for gene in pbar(gtf_data):
         start = gene.start
@@ -247,7 +251,7 @@ if __name__ == "__main__":
                 upstream[i] += col.n
 
         if sum(delta_down):
-            all_ratios[gene.other] = total_downstream / sum(delta_down) / mean_reads
+            all_ratios[gene.other] = total_downstream / sum(delta_down) / total_reads
 
 
 
