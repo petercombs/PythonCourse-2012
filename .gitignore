@@ -30,6 +30,7 @@ pip-log.txt
 *.txt
 *.rtf
 *.fa
+*.fai
 *.fas
 *.fastq
 *.gtf
@@ -43,5 +44,8 @@ pip-log.txt
 *.info
 *.wig
 analysis
+*.bt2
+*.ebwt
 
 tophat_out
+*.fpkm_tracking
