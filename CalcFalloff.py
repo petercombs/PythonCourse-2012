@@ -141,7 +141,7 @@ if __name__ == "__main__":
     nearest_to_left, nearest_to_right = find_nearest_genes(gtf_data,
                                                            GENOME_SIZE)
 
-    reads = pysam.Samfile(sys.argv[1:], 'rb')
+    reads = pysam.Samfile(sys.argv[1], 'rb')
 
     upstream = np.zeros(UPSTREAM) # number of reads (calculated with pileup)
     upstream_n = np.zeros(UPSTREAM) # number of genes used at each position
@@ -155,6 +155,7 @@ if __name__ == "__main__":
 
     filter_gtf(gtf_data)
     pbar = progressbar.ProgressBar(maxval=len(gtf_data))
+    all_ratios = {}
     for gene in pbar(gtf_data):
         start = gene.start
         end = gene.end
@@ -180,6 +181,7 @@ if __name__ == "__main__":
                                            strand)
 
         dists.append(upstream_end - upstream_start)
+        total_downstream = 0.0
 
 
         for col in reads.pileup(chrom, upstream_start, upstream_end):
@@ -191,13 +193,15 @@ if __name__ == "__main__":
                 upstream[i] += col.n
             elif strand == '-':
                 i = start - col.pos - 1
+                total_downstream += col.n
                 downstream[i] += col.n
-                if col.n > 50 and i > 50:
-                    print "-Something fishy...", start, col.pos, col.n
+                #if col.n > 50 and i > 50:
+                    #print "-Something fishy...", start, col.pos, col.n
 
 
         # Look at the gene itself
         last_pct = -1
+        total_reads = 0
         for col in reads.pileup(chrom, start, end):
             if not start <= col.pos < end:
                 continue
@@ -213,12 +217,14 @@ if __name__ == "__main__":
             elif strand == '-':
                 hi = int(np.floor(RESOLUTION * (end - col.pos)/(end - start)))
 
+            total_reads += col.n
             if last_pct == hi:
                 gene_cov[hi] += col.n
             else:
                 gene_cov[last_pct:hi] += col.n
             last_pct = hi
 
+        mean_reads = total_reads / float(end - start)
 
 
         # Look to the right of the gene
@@ -233,12 +239,15 @@ if __name__ == "__main__":
             if strand == '+':
                 i = col.pos - end - 1
                 downstream[i] += col.n
-                if col.n > 50 and i > 50:
-                    print "+Something fishy...", start, col.pos, col.n
+                total_downstream += col.n
+                #if col.n > 50 and i > 50:
+                    #print "+Something fishy...", start, col.pos, col.n
             elif strand == '-':
                 i = UPSTREAM - col.pos + end
                 upstream[i] += col.n
 
+        if sum(delta_down):
+            all_ratios[gene.other] = total_downstream / sum(delta_down) / mean_reads
 
 
 
