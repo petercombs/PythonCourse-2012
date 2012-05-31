@@ -13,7 +13,8 @@ def relabel(tick, bp_equiv):
     else:
         return "+%d bp" % (tick - bp_equiv)
 
-def plot_averaged_genes(upstream, gene, downstream, bp_equiv = 200, label=None):
+def plot_averaged_genes(upstream, gene, downstream, bp_equiv = 200, label=None,
+                       normed=False):
     """ Plots the coverage around genes.
 
     Here, the upstream and downstream regions are assumed to be in base pairs,
@@ -25,6 +26,12 @@ def plot_averaged_genes(upstream, gene, downstream, bp_equiv = 200, label=None):
 
     fig = mpl.gcf()
     ax = fig.gca()
+
+    if norm:
+        normval = np.median(gene)
+        upstream = np.array(upstream) / normval
+        gene = np.array(gene) / normval
+        downstream = np.array(downstream) / normval
     retval.extend(ax.plot(np.arange(-len(upstream), 0),
                            upstream,
                            label=label))
