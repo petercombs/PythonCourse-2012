@@ -13,7 +13,7 @@ def relabel(tick, bp_equiv):
     else:
         return "+%d bp" % (tick - bp_equiv)
 
-def plot_averaged_genes(upstream, gene, downstream, bp_equiv = 200):
+def plot_averaged_genes(upstream, gene, downstream, bp_equiv = 200, label=None):
     """ Plots the coverage around genes.
 
     Here, the upstream and downstream regions are assumed to be in base pairs,
@@ -25,15 +25,16 @@ def plot_averaged_genes(upstream, gene, downstream, bp_equiv = 200):
 
     fig = mpl.gcf()
     ax = fig.gca()
-    retval.append(ax.plot(np.arange(-len(upstream), 0),
+    retval.extend(ax.plot(np.arange(-len(upstream), 0),
                            upstream,
-                           label='Upstream'))
-    retval.append(ax.plot(np.linspace(0, bp_equiv, len(gene)),
-                           gene,
-                           label='Gene'))
-    retval.append(ax.plot(np.arange(bp_equiv, len(downstream) + bp_equiv),
-                           downstream,
-                           label='Downstream'))
+                           label=label))
+    color = retval[0].get_color()
+    retval.extend(ax.plot(np.linspace(0, bp_equiv, len(gene)),
+                          gene,
+                          color=color))
+    retval.extend(ax.plot(np.arange(bp_equiv, len(downstream) + bp_equiv),
+                          downstream,
+                          color=color))
     ymin, ymax = ax.get_ybound()
     retval.append(ax.vlines([0, bp_equiv], ymin, ymax , linestyles='dashed'))
     ticks = list(ax.get_xticks())
