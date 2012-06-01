@@ -27,7 +27,7 @@ def plot_averaged_genes(upstream, gene, downstream, bp_equiv = 200, label=None,
     fig = mpl.gcf()
     ax = fig.gca()
 
-    if norm:
+    if normed:
         normval = np.median(gene)
         upstream = np.array(upstream) / normval
         gene = np.array(gene) / normval
