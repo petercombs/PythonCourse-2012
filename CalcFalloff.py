@@ -13,6 +13,7 @@ import numpy as np
 import progressbar
 import sys
 from Utils import parse_gtf, find_nearest_genes, filter_gtf
+import bx.bbi.bigwig_file as bigwig
 
 
 # Define constants
@@ -66,7 +67,8 @@ if __name__ == "__main__":
     nearest_to_left, nearest_to_right = find_nearest_genes(gtf_data,
                                                            GENOME_SIZE)
 
-    reads = pysam.Samfile(sys.argv[1], 'rb')
+    #reads = pysam.Samfile(sys.argv[1], 'rb')
+    reads = bigwig.BigWigFile(open(sys.argv[1], 'rb'))
 
     upstream = np.zeros(UPSTREAM) # number of reads (calculated with pileup)
     upstream_n = np.zeros(UPSTREAM) # number of genes used at each position
@@ -113,26 +115,31 @@ if __name__ == "__main__":
         total_downstream = 0.0
 
 
-        for col in reads.pileup(chrom, upstream_start, upstream_end):
-            if not upstream_start <= col.pos < upstream_end:
-                continue
+        #for col in reads.pileup(chrom, upstream_start, upstream_end):
+        if upstream_start < upstream_end:
+            for n, pos in zip(reads.get_as_array(chrom, upstream_start,
+                                                   upstream_end),
+                                range(upstream_start, upstream_end)):
+                if not upstream_start <= pos < upstream_end:
+                    continue
 
-            if strand == '+':
-                i = UPSTREAM - start + col.pos
-                upstream[i] += col.n
-            elif strand == '-':
-                i = start - col.pos - 1
-                total_downstream += col.n
-                downstream[i] += col.n
-                #if col.n > 50 and i > 50:
-                    #print "-Something fishy...", start, col.pos, col.n
+                if strand == '+':
+                    i = UPSTREAM - start + pos
+                    upstream[i] += n
+                elif strand == '-':
+                    i = start - pos - 1
+                    total_downstream += n
+                    downstream[i] += n
+                    #if col.n > 50 and i > 50:
+                        #print "-Something fishy...", start, col.pos, col.n
 
 
         # Look at the gene itself
         last_pct = -1
         total_reads = 0
-        for col in reads.pileup(chrom, start, end):
-            if not start <= col.pos < end:
+        for n, pos in zip(reads.get_as_array(chrom, start, end),
+                          range(start, end)):
+            if not start <= pos < end:
                 continue
             if last_pct == -1:
                 # Genes with any expression whatsoever should get included
@@ -142,15 +149,15 @@ if __name__ == "__main__":
                 last_pct = 0
             # Note the from future import __division__
             if strand == '+':
-                hi = int(np.floor(RESOLUTION * (col.pos - start)/(end - start)))
+                hi = int(np.floor(RESOLUTION * (pos - start)/(end - start)))
             elif strand == '-':
-                hi = int(np.floor(RESOLUTION * (end - col.pos)/(end - start)))
+                hi = int(np.floor(RESOLUTION * (end - pos)/(end - start)))
 
-            total_reads += col.n
+            total_reads += n
             if last_pct == hi:
-                gene_cov[hi] += col.n
+                gene_cov[hi] += n
             else:
-                gene_cov[last_pct:hi] += col.n
+                gene_cov[last_pct:hi] += n
             last_pct = hi
 
         mean_reads = total_reads / float(end - start)
@@ -161,19 +168,22 @@ if __name__ == "__main__":
 
         dists.append(downstream_end - downstream_start)
 
-        for col in reads.pileup(chrom, downstream_start, downstream_end):
-            if not downstream_start < col.pos < downstream_end:
-                continue
+        if downstream_start < downstream_end:
+            for n, pos in zip(reads.get_as_array(chrom, downstream_start,
+                                                 downstream_end) ,
+                              range(downstream_start, downstream_end)):
+                if not downstream_start < pos < downstream_end:
+                    continue
 
-            if strand == '+':
-                i = col.pos - end - 1
-                downstream[i] += col.n
-                total_downstream += col.n
-                #if col.n > 50 and i > 50:
-                    #print "+Something fishy...", start, col.pos, col.n
-            elif strand == '-':
-                i = UPSTREAM - col.pos + end
-                upstream[i] += col.n
+                if strand == '+':
+                    i = pos - end - 1
+                    downstream[i] += n
+                    total_downstream += n
+                    #if n > 50 and i > 50:
+                        #print "+Something fishy...", start, pos, n
+                elif strand == '-':
+                    i = UPSTREAM - pos + end
+                    upstream[i] += n
 
         if sum(delta_down):
             all_ratios[gene.other] = total_downstream / sum(delta_down) / total_reads
