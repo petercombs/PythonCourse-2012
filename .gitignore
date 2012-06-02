@@ -47,5 +47,9 @@ analysis
 *.bt2
 *.ebwt
 
+# OTher data files
 tophat_out
 *.fpkm_tracking
+human
+*.png
+meme*
