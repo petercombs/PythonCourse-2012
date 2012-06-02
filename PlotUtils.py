@@ -54,3 +54,17 @@ def plot_averaged_genes(upstream, gene, downstream, bp_equiv = 200, label=None,
     return retval
 
 
+def plot_average_fft(seqs, label=None):
+    avg = np.sum([np.abs(np.fft.fftshift(np.fft.fft(seq))) for seq in seqs if seq], axis=0)
+    avg /= len(seqs)
+    avg /= np.sqrt(len(seq))
+    return mpl.plot(1/np.fft.fftfreq(len(avg)), avg, label=label)
+
+
+def plot_average_fft_diff(seqs1, seqs2, label=None):
+    avg1 = np.sum([np.abs(np.fft.fftshift(np.fft.fft(seq))) for seq in seqs1 if seq], axis=0)
+    avg1 /= len(seqs1)
+    avg2 = np.sum([np.abs(np.fft.fftshift(np.fft.fft(seq))) for seq in seqs2 if seq], axis=0)
+    avg2 /= len(seqs2)
+
+    return mpl.plot(1/np.fft.fftfreq(len(avg1)), avg1 - avg2, label=label)
