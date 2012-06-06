@@ -56,6 +56,7 @@ if __name__ == "__main__":
 
     filter_gtf(gtf_data)
     all_ratios = {}
+    outputted_data = []
     pbar = progressbar.ProgressBar(widgets=['Pileups: ',
                                            progressbar.Percentage(), ' ',
                                            progressbar.Bar(), ' ',
@@ -81,8 +82,10 @@ if __name__ == "__main__":
                     seq = args.Genome[gene.chrom][gene.end + args.downstream_start :
                                              gene.end+args.downstream_end]
                     seq.id = gene_id
-                    seq.description = '%d-%d' % (gene.start, gene.end)
-                    SeqIO.write(seq, args.outfh, 'fasta')
+                    if gene_id not in outputted_data:
+                        seq.description = '%d-%d' % (gene.start, gene.end)
+                        SeqIO.write(seq, args.outfh, 'fasta')
+                        outputted_data.append(gene_id)
         elif gene.strand == '-':
             if gene.start - args.downstream_region < nearest_to_left[gene.start - 3]:
                 continue
@@ -103,8 +106,10 @@ if __name__ == "__main__":
                                              gene.start - args.downstream_start]
                     seq = seq.reverse_complement()
                     seq.id = gene_id
-                    seq.description = '%d-%d' % (gene.start, gene.end)
-                    SeqIO.write(seq, args.outfh, 'fasta')
+                    if gene_id not in outputted_data:
+                        seq.description = '%d-%d' % (gene.start, gene.end)
+                        SeqIO.write(seq, args.outfh, 'fasta')
+                        outputted_data.append(gene_id)
                 elif all_ratios[gene.other] < 1 and args.nonfh:
                     seq = args.Genome[gene.chrom][gene.start - args.downstream_end :
                                              gene.start - args.downstream_start]
