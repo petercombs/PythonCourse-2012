@@ -33,7 +33,10 @@ def parse_args():
     if args.auto_name_out:
         name = 'hidrug' if (args.keep_pos > 0) else 'drug_nonresp'
         name += '_utrs_'
-        name += '%d_%d.fa' % (args.downstream_start, args.downstream_end)
+        name += '%d_%d_%gxlo_%gxhi.fa' % (args.downstream_start,
+                                          args.downstream_end,
+                                          args.ratio_low,
+                                          args.ratio_high)
         print "making file: ", name
         args.outfh = open(name, 'w')
     args.Genome = {r.name : r
