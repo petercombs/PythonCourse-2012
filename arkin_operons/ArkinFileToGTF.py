@@ -1,3 +1,6 @@
+### NOTE: Rather than trying to go line by line through the operon calls, why
+###  not try going line by line through the genes, and look up whether adjacent genes
+###  are in the same operon if necessary
 
 def get_gene_info(gene_info):
     """ Make a dictionary with start and stop information
@@ -46,7 +49,7 @@ def operon_calls_to_gtf(operon_calls_file, sss_dict):
         is_operon = (data[6] == "TRUE")
 
 
-        if strand1 != last_gene_strand and last_gene_name:
+        if name1 != last_gene_name and last_gene_name:
             annot = 'operonName "' + last_gene_name + '";'
             write_gff_line(out_file, last_gene_start, last_gene_stop, last_gene_strand, annot)
             current_operon_names = []
