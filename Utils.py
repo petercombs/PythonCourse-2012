@@ -74,7 +74,7 @@ def find_nearest_genes(gtf_data, genome_size):
 def filter_gtf(gtf_data):
     """ Remove non-CDS entries from the GTF data"""
     for entry in gtf_data[:]:
-        if entry.type != 'CDS':
+        if entry.type != 'CDS' and entry.type != 'operon':
             gtf_data.remove(entry)
 
 
