@@ -8,11 +8,11 @@ no-drug case, and fall off much more slowly in the +drug case.
 """
 
 from __future__ import division
-from argparse import ArgumentParser
+from argparse import ArgumentParser, FileType
 import numpy as np
 import progressbar
 import sys
-from Utils import parse_gtf, find_nearest_genes, filter_gtf
+import Utils
 import bx.bbi.bigwig_file as bigwig
 
 
@@ -24,11 +24,21 @@ def parse_args():
     parser.add_argument('-c', '--clearance', type=int, default=50)
     parser.add_argument('-g', '--gtf-filename',
                    default='E_coli_k12.EB1_e_coli_k12.13.gtf')
+    parser.add_argument('-t', '--use-non-terminated', dest='use_terminated',
+                   action='store_false')
+    parser.add_argument('-T', '--use-terminated', dest='use_terminated',
+                   action='store_true')
+    parser.add_argument('-G', '--terminated-genes', default=False)
     parser.add_argument('-S', '--genome-size', type=int, default=4639675)
     parser.add_argument('bigwig', type=FileType('rb'))
 
     global args
     args = parser.parse_args()
+    if args.terminated_genes:
+        terminated_genes = set()
+        for line in open(args.terminated_genes):
+            terminated_genes.add(line.strip())
+        args.terminated_genes = terminated_genes
     return args
 
 def find_upper_limits(end, strand, to_left, to_right):
@@ -71,8 +81,8 @@ def calc_deltas(us, ue, ds, de, strand):
 
 if __name__ == "__main__":
     args = parse_args()
-    gtf_data = parse_gtf(args.gtf_filename)
-    nearest_to_left, nearest_to_right = find_nearest_genes(gtf_data,
+    gtf_data = Utils.parse_gtf(args.gtf_filename)
+    nearest_to_left, nearest_to_right = Utils.find_nearest_genes(gtf_data,
                                                            args.genome_size)
 
     #reads = pysam.Samfile(sys.argv[1], 'rb')
@@ -88,7 +98,7 @@ if __name__ == "__main__":
 
     dists = []
 
-    filter_gtf(gtf_data)
+    Utils.filter_gtf(gtf_data)
     pbar = progressbar.ProgressBar(widgets=['Pileups: ',
                                            progressbar.Percentage(), ' ',
                                            progressbar.Bar(), ' ',
@@ -104,6 +114,13 @@ if __name__ == "__main__":
         if start == 4275492: continue
         # soxR-1 has sraL with an overlapping region with sraL.  I'm a little
         # surprised this seems to be the only problem...
+
+        if args.terminated_genes:
+            name = Utils.guess_gene_name(gene.other)
+            if args.use_terminated and name not in args.terminated_genes:
+                continue
+            if not args.use_terminated and name in args.terminated_genes:
+                continue
 
         # Look to the left of the gene
         # (upstream for the + strand, downstream for the - strand)
