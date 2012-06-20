@@ -18,13 +18,14 @@ import bx.bbi.bigwig_file as bigwig
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_arg('-d', '--downstream', type=int, default=300)
-    parser.add_arg('-u', '--upstream', type=int, default=300)
-    parser.add_arg('-r', '--resolution', type=int, default=200)
-    parser.add_arg('-c', '--clearance', type=int, default=50)
-    parser.add_arg('-g', '--gtf-filename',
+    parser.add_argument('-d', '--downstream', type=int, default=300)
+    parser.add_argument('-u', '--upstream', type=int, default=300)
+    parser.add_argument('-r', '--resolution', type=int, default=200)
+    parser.add_argument('-c', '--clearance', type=int, default=50)
+    parser.add_argument('-g', '--gtf-filename',
                    default='E_coli_k12.EB1_e_coli_k12.13.gtf')
-    parser.add_arg('-S', '--genome-size', type=int, default=4639675)
+    parser.add_argument('-S', '--genome-size', type=int, default=4639675)
+    parser.add_argument('bigwig', type=FileType('rb'))
 
     global args
     args = parser.parse_args()
@@ -37,7 +38,7 @@ def find_upper_limits(end, strand, to_left, to_right):
     else:
         dist = args.upstream
     no_gene_pos = end + dist
-    gene_pos = to_right[end] - args.clearance()
+    gene_pos = to_right[end] - args.clearance
     downstream = max(min(no_gene_pos, gene_pos),
                      end)
     return downstream
@@ -50,7 +51,7 @@ def find_lower_limits(start, strand, to_left, to_right):
         dist = args.downstream
 
     no_gene_pos = start - dist
-    gene_pos = nearest_to_left[start] + args.clearance()
+    gene_pos = nearest_to_left[start] + args.clearance
     upstream= min(max(no_gene_pos, gene_pos),
                          start)
     return upstream
@@ -75,7 +76,7 @@ if __name__ == "__main__":
                                                            args.genome_size)
 
     #reads = pysam.Samfile(sys.argv[1], 'rb')
-    reads = bigwig.BigWigFile(open(sys.argv[1], 'rb'))
+    reads = bigwig.BigWigFile(args.bigwig)
 
     upstream = np.zeros(args.upstream) # number of reads (calculated with pileup)
     upstream_n = np.zeros(args.upstream) # number of genes used at each position
