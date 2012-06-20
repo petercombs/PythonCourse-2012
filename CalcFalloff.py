@@ -8,7 +8,7 @@ no-drug case, and fall off much more slowly in the +drug case.
 """
 
 from __future__ import division
-import pysam
+from argparse import ArgumentParser
 import numpy as np
 import progressbar
 import sys
@@ -16,22 +16,28 @@ from Utils import parse_gtf, find_nearest_genes, filter_gtf
 import bx.bbi.bigwig_file as bigwig
 
 
-# Define constants
-GENOME_SIZE = 4639675  # E. coli K12 MG1655 from Ensembl
-RESOLUTION = 200
-UPSTREAM = 300
-DOWNSTREAM = 300
-CLEARANCE = 50
-gtf_filename = 'E_coli_k12.EB1_e_coli_k12.13.gtf'
+def parse_args():
+    parser = ArgumentParser()
+    parser.add_arg('-d', '--downstream', type=int, default=300)
+    parser.add_arg('-u', '--upstream', type=int, default=300)
+    parser.add_arg('-r', '--resolution', type=int, default=200)
+    parser.add_arg('-c', '--clearance', type=int, default=50)
+    parser.add_arg('-g', '--gtf-filename',
+                   default='E_coli_k12.EB1_e_coli_k12.13.gtf')
+    parser.add_arg('-S', '--genome-size', type=int, default=4639675)
+
+    global args
+    args = parser.parse_args()
+    return args
 
 def find_upper_limits(end, strand, to_left, to_right):
     """ """
     if strand == '+':
-        dist = DOWNSTREAM 
+        dist = args.downstream
     else:
-        dist = UPSTREAM
+        dist = args.upstream
     no_gene_pos = end + dist
-    gene_pos = to_right[end] - CLEARANCE
+    gene_pos = to_right[end] - args.clearance()
     downstream = max(min(no_gene_pos, gene_pos),
                      end)
     return downstream
@@ -39,43 +45,44 @@ def find_upper_limits(end, strand, to_left, to_right):
 def find_lower_limits(start, strand, to_left, to_right):
     """ """
     if strand == "+":
-        dist = UPSTREAM
+        dist = args.upstream
     else:
-        dist = DOWNSTREAM
+        dist = args.downstream
 
     no_gene_pos = start - dist
-    gene_pos = nearest_to_left[start] + CLEARANCE
+    gene_pos = nearest_to_left[start] + args.clearance()
     upstream= min(max(no_gene_pos, gene_pos),
                          start)
     return upstream
 
 def calc_deltas(us, ue, ds, de, strand):
-    delta_up = np.zeros(UPSTREAM)
-    delta_down = np.zeros(DOWNSTREAM)
+    delta_up = np.zeros(args.upstream)
+    delta_down = np.zeros(args.downstream)
 
     if strand == '+':
-        delta_up[UPSTREAM - ue + us:] += 1
+        delta_up[args.upstream - ue + us:] += 1
         delta_down[:de - ds] += 1
     elif strand == '-':
-        delta_up[UPSTREAM - de + ds:] += 1
+        delta_up[args.upstream - de + ds:] += 1
         delta_down[:ue - us] += 1
 
     return delta_up, delta_down
 
 if __name__ == "__main__":
-    gtf_data = parse_gtf(gtf_filename)
+    args = parse_args()
+    gtf_data = parse_gtf(args.gtf_filename)
     nearest_to_left, nearest_to_right = find_nearest_genes(gtf_data,
-                                                           GENOME_SIZE)
+                                                           args.genome_size)
 
     #reads = pysam.Samfile(sys.argv[1], 'rb')
     reads = bigwig.BigWigFile(open(sys.argv[1], 'rb'))
 
-    upstream = np.zeros(UPSTREAM) # number of reads (calculated with pileup)
-    upstream_n = np.zeros(UPSTREAM) # number of genes used at each position
-    downstream = np.zeros(DOWNSTREAM)
-    downstream_n = np.zeros(DOWNSTREAM)
+    upstream = np.zeros(args.upstream) # number of reads (calculated with pileup)
+    upstream_n = np.zeros(args.upstream) # number of genes used at each position
+    downstream = np.zeros(args.downstream)
+    downstream_n = np.zeros(args.downstream)
 
-    gene_cov = np.zeros(RESOLUTION)
+    gene_cov = np.zeros(args.resolution)
     gene_cov_n = 0
 
     dists = []
@@ -124,7 +131,7 @@ if __name__ == "__main__":
                     continue
 
                 if strand == '+':
-                    i = UPSTREAM - start + pos
+                    i = args.upstream - start + pos
                     upstream[i] += n
                 elif strand == '-':
                     i = start - pos - 1
@@ -149,9 +156,9 @@ if __name__ == "__main__":
                 last_pct = 0
             # Note the from future import __division__
             if strand == '+':
-                hi = int(np.floor(RESOLUTION * (pos - start)/(end - start)))
+                hi = int(np.floor(args.resolution * (pos - start)/(end - start)))
             elif strand == '-':
-                hi = int(np.floor(RESOLUTION * (end - pos)/(end - start)))
+                hi = int(np.floor(args.resolution * (end - pos)/(end - start)))
 
             total_reads += n
             if last_pct == hi:
@@ -182,7 +189,7 @@ if __name__ == "__main__":
                     #if n > 50 and i > 50:
                         #print "+Something fishy...", start, pos, n
                 elif strand == '-':
-                    i = UPSTREAM - pos + end
+                    i = args.upstream - pos + end
                     upstream[i] += n
 
         if sum(delta_down):
