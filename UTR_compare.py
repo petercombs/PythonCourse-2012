@@ -9,6 +9,7 @@ from Bio import SeqIO
 
 GENOME_SIZE = 4639675  # E. coli K12 MG1655 from Ensembl
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gtf-fname', '-G')
@@ -27,7 +28,7 @@ def parse_args():
                         action='store_const', const=-1)
     parser.add_argument('--auto-name-out', '-A', default=False,
                         action="store_true")
-    args =  parser.parse_args()
+    args = parser.parse_args()
     print args.keep_pos
     if args.auto_name_out:
         name = 'hidrug' if (args.keep_pos > 0) else 'drug_nonresp'
@@ -38,12 +39,11 @@ def parse_args():
                                           args.ratio_high)
         print "making file: ", name
         args.outfh = open(name, 'w')
-    args.Genome = {r.name : r
+    args.Genome = {r.name: r
               for r in SeqIO.parse(args.genome, 'fasta')}
 
     args.nonfh = False
     return args
-
 
 
 if __name__ == "__main__":
@@ -66,24 +66,24 @@ if __name__ == "__main__":
                                    maxval=len(gtf_data))
     for gene in pbar(gtf_data):
         gene_data = gene.other.split(';')
-        gene_data = {dat.split()[0] : dat.split()[1] for dat in gene_data if dat}
+        gene_data = {dat.split()[0]: dat.split()[1] for dat in gene_data if dat}
         gene_id = gene_data.get('gene_name', 'unknown_gene').strip('"')
         if gene.strand == '+':
             if ((gene.end + args.downstream_region)
                 > (nearest_to_right[gene.end + 3] - args.downstream_clearance)):
                 continue
             drug_pileup = drug_reads.get_as_array(gene.chrom, gene.end,
-                                            gene.end+args.downstream_region)
+                                            gene.end + args.downstream_region)
             no_drug_pileup = no_drug_reads.get_as_array(gene.chrom, gene.end,
-                                                  gene.end+args.downstream_region)
+                                                  gene.end + args.downstream_region)
             drug_counts = sum(drug_pileup)
             no_drug_counts = sum(no_drug_pileup)
             if no_drug_counts:
                 all_ratios[gene.other] = drug_counts / no_drug_counts
-                if (args.ratio_low <  all_ratios[gene.other] < args.ratio_high
+                if (args.ratio_low < all_ratios[gene.other] < args.ratio_high
                     and args.outfh):
-                    seq = args.Genome[gene.chrom][gene.end + args.downstream_start :
-                                             gene.end+args.downstream_end]
+                    seq = args.Genome[gene.chrom][gene.end + args.downstream_start:
+                                             gene.end + args.downstream_end]
                     seq.id = gene_id
                     if gene_id not in outputted_data:
                         seq.description = '%d-%d' % (gene.start, gene.end)
@@ -104,9 +104,9 @@ if __name__ == "__main__":
             no_drug_counts = sum(no_drug_pileup)
             if no_drug_counts:
                 all_ratios[gene.other] = drug_counts / no_drug_counts
-                if (args.ratio_low <  all_ratios[gene.other] < args.ratio_high
+                if (args.ratio_low < all_ratios[gene.other] < args.ratio_high
                     and args.outfh):
-                    seq = args.Genome[gene.chrom][gene.start - args.downstream_end :
+                    seq = args.Genome[gene.chrom][gene.start - args.downstream_end:
                                              gene.start - args.downstream_start]
                     seq = seq.reverse_complement()
                     seq.id = gene_id
@@ -115,7 +115,7 @@ if __name__ == "__main__":
                         SeqIO.write(seq, args.outfh, 'fasta')
                         outputted_data.append(gene_id)
                 elif all_ratios[gene.other] < 1 and args.nonfh:
-                    seq = args.Genome[gene.chrom][gene.start - args.downstream_end :
+                    seq = args.Genome[gene.chrom][gene.start - args.downstream_end:
                                              gene.start - args.downstream_start]
                     seq = seq.reverse_complement()
                     seq.id = gene_id

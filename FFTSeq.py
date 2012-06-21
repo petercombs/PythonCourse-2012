@@ -3,6 +3,7 @@ import sys
 
 is_one = sys.argv[2:]
 
+
 def find_all(string, substring):
     loc = string.find(substring)
     locs = []
@@ -10,6 +11,7 @@ def find_all(string, substring):
         locs.append(loc)
         loc = string.find(substring, loc + 1)
     return locs
+
 
 def find_all_from_list(string, list):
     all_locs = []

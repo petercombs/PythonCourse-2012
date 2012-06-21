@@ -3,6 +3,7 @@ import progressbar
 
 Gene = namedtuple("Gene", ['chrom', 'start', 'end', 'strand', 'type', 'other'])
 
+
 def parse_gtf(filename):
     """ Parses the GTF in filename into a list of Genes
 
@@ -27,14 +28,15 @@ def parse_gtf(filename):
             last_pos = data[0], data[3], data[4]
     return genelist
 
+
 def find_nearest_genes(gtf_data, genome_size):
-    """For each base on the genome, find the nearest genes to the left and right
+    """For each base on the genome find the nearest genes to the left and right
 
     This is useful for doing lookups, although it may be too large to scale to
     non-bacterial organisms.
     """
-    nearest_to_left = [0]*genome_size
-    nearest_to_right = [0]*genome_size
+    nearest_to_left = [0] * genome_size
+    nearest_to_right = [0] * genome_size
 
     old_start = 0
     old_end = 0
@@ -45,7 +47,8 @@ def find_nearest_genes(gtf_data, genome_size):
     pbar = progressbar.ProgressBar(maxval=len(gtf_data))
 
     for gene in pbar(gtf_data):
-        if gene.chrom != 'Chromosome': continue
+        if gene.chrom != 'Chromosome':
+            continue
         for i in range(old_start, gene.start):
             nearest_to_right[i] = gene.start
         if first_end == 0:
@@ -66,10 +69,8 @@ def find_nearest_genes(gtf_data, genome_size):
         nearest_to_left[i] = gene.end
     for i in range(gene.start, len(nearest_to_right)):
         nearest_to_right[i] = first_start
-
-
-
     return nearest_to_left, nearest_to_right
+
 
 def filter_gtf(gtf_data):
     """ Remove non-CDS entries from the GTF data"""
@@ -87,7 +88,7 @@ def guess_gene_name(annotation_string):
         entry = entry.strip()
         if 'name' in entry.lower():
             kind = entry[:entry.lower().find('name')]
-            name = entry[entry.find('"')+1:-1] #Within the quotes
+            name = entry[entry.find('"') + 1:-1]  # Within the quotes
             names[kind] = name
     for guess in guess_order:
         if guess in names:
@@ -95,5 +96,3 @@ def guess_gene_name(annotation_string):
     if len(names) == 1:
         return names.values()[0]
     return annotation_string
-
-

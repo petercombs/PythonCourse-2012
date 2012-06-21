@@ -41,6 +41,7 @@ def parse_args():
         args.terminated_genes = terminated_genes
     return args
 
+
 def find_upper_limits(end, strand, to_left, to_right):
     """ """
     if strand == '+':
@@ -53,6 +54,7 @@ def find_upper_limits(end, strand, to_left, to_right):
                      end)
     return downstream
 
+
 def find_lower_limits(start, strand, to_left, to_right):
     """ """
     if strand == "+":
@@ -62,9 +64,10 @@ def find_lower_limits(start, strand, to_left, to_right):
 
     no_gene_pos = start - dist
     gene_pos = nearest_to_left[start] + args.clearance
-    upstream= min(max(no_gene_pos, gene_pos),
+    upstream = min(max(no_gene_pos, gene_pos),
                          start)
     return upstream
+
 
 def calc_deltas(us, ue, ds, de, strand):
     delta_up = np.zeros(args.upstream)
@@ -85,11 +88,12 @@ if __name__ == "__main__":
     nearest_to_left, nearest_to_right = Utils.find_nearest_genes(gtf_data,
                                                            args.genome_size)
 
-    #reads = pysam.Samfile(sys.argv[1], 'rb')
     reads = bigwig.BigWigFile(args.bigwig)
 
-    upstream = np.zeros(args.upstream) # number of reads (calculated with pileup)
-    upstream_n = np.zeros(args.upstream) # number of genes used at each position
+    # number of reads (calculated with pileup)
+    upstream = np.zeros(args.upstream)
+    # number of genes used at each position
+    upstream_n = np.zeros(args.upstream)
     downstream = np.zeros(args.downstream)
     downstream_n = np.zeros(args.downstream)
 
@@ -109,9 +113,10 @@ if __name__ == "__main__":
         start = gene.start
         end = gene.end
         strand = gene.strand
-        chrom = gene.chrom # Should always be "Chromosome"
+        chrom = gene.chrom  # Should always be "Chromosome"
 
-        if start == 4275492: continue
+        if start == 4275492:
+            continue
         # soxR-1 has sraL with an overlapping region with sraL.  I'm a little
         # surprised this seems to be the only problem...
 
@@ -139,8 +144,6 @@ if __name__ == "__main__":
         dists.append(upstream_end - upstream_start)
         total_downstream = 0.0
 
-
-        #for col in reads.pileup(chrom, upstream_start, upstream_end):
         if upstream_start < upstream_end:
             for n, pos in zip(reads.get_as_array(chrom, upstream_start,
                                                    upstream_end),
@@ -155,9 +158,6 @@ if __name__ == "__main__":
                     i = start - pos - 1
                     total_downstream += n
                     downstream[i] += n
-                    #if col.n > 50 and i > 50:
-                        #print "-Something fishy...", start, col.pos, col.n
-
 
         # Look at the gene itself
         last_pct = -1
@@ -174,9 +174,11 @@ if __name__ == "__main__":
                 last_pct = 0
             # Note the from future import __division__
             if strand == '+':
-                hi = int(np.floor(args.resolution * (pos - start)/(end - start)))
+                hi = int(np.floor(args.resolution *
+                                  (pos - start) / (end - start)))
             elif strand == '-':
-                hi = int(np.floor(args.resolution * (end - pos)/(end - start)))
+                hi = int(np.floor(args.resolution *
+                                  (end - pos) / (end - start)))
 
             total_reads += n
             if last_pct == hi:
@@ -187,15 +189,13 @@ if __name__ == "__main__":
 
         mean_reads = total_reads / float(end - start)
 
-
         # Look to the right of the gene
         # (downstream for the + strand, upstream for the - strand)
-
         dists.append(downstream_end - downstream_start)
 
         if downstream_start < downstream_end:
             for n, pos in zip(reads.get_as_array(chrom, downstream_start,
-                                                 downstream_end) ,
+                                                 downstream_end),
                               range(downstream_start, downstream_end)):
                 if not downstream_start < pos < downstream_end:
                     continue
@@ -204,22 +204,20 @@ if __name__ == "__main__":
                     i = pos - end - 1
                     downstream[i] += n
                     total_downstream += n
-                    #if n > 50 and i > 50:
-                        #print "+Something fishy...", start, pos, n
                 elif strand == '-':
                     i = args.upstream - pos + end
                     upstream[i] += n
 
         if sum(delta_down) and total_reads:
-            all_ratios[gene.other] = total_downstream / sum(delta_down) / total_reads
+            all_ratios[gene.other] = total_downstream / (sum(delta_down) *
+                                                         total_reads)
 
     avg_upstream = upstream / upstream_n
     avg_gene_cov = gene_cov / gene_cov_n
     avg_downstream = downstream / downstream_n
 
-    print np.median(avg_upstream), np.median(avg_upstream) / np.median(avg_gene_cov)
+    print np.median(avg_upstream), (np.median(avg_upstream) /
+                                    np.median(avg_gene_cov))
     print np.median(avg_gene_cov), 1
-    print np.median(avg_downstream), np.median(avg_downstream) / np.median(avg_gene_cov)
-
-
-
+    print np.median(avg_downstream), (np.median(avg_downstream) /
+                                      np.median(avg_gene_cov))
