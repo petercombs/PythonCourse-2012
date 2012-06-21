@@ -78,9 +78,9 @@ def filter_gtf(gtf_data):
             gtf_data.remove(entry)
 
 
-def get_gene_name(annotation_string):
+def guess_gene_name(annotation_string):
     """ Guess name based on "Other" field of GTF/GFF entry"""
-    guess_order = ['operon', 'gene', 'transcript']
+    guess_order = ['operon', 'operon_', 'gene', 'gene_', 'transcript']
     entries = annotation_string.split(';')
     names = {}
     for entry in entries:
