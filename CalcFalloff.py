@@ -210,8 +210,16 @@ if __name__ == "__main__":
                     i = args.upstream - pos + end
                     upstream[i] += n
 
-        if sum(delta_down):
+        if sum(delta_down) and total_reads:
             all_ratios[gene.other] = total_downstream / sum(delta_down) / total_reads
+
+    avg_upstream = upstream / upstream_n
+    avg_gene_cov = gene_cov / gene_cov_n
+    avg_downstream = downstream / downstream_n
+
+    print np.median(avg_upstream), np.median(avg_upstream) / np.median(avg_gene_cov)
+    print np.median(avg_gene_cov), 1
+    print np.median(avg_downstream), np.median(avg_downstream) / np.median(avg_gene_cov)
 
 
 
